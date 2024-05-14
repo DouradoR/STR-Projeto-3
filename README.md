@@ -4,9 +4,7 @@ Simulação de cruzamento de trilhos de trem usando o FreeRTOS
 
 ## Vídeo Demonstração
 
-```c
-
-```
+[![Nome do Vídeo](https://img.youtube.com/vi/83wa08kilNY/0.jpg)](https://youtu.be/83wa08kilNY))
 
 ## Objetivo
 
