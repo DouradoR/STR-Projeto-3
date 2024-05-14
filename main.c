@@ -149,16 +149,16 @@ static BaseType_t xTraceRunning = pdTRUE;
 int gate = 0;			//  0 aberto
 int guarda_trem = 0;	// 0 - Liberado 1 - Bloqueado 
 int guarda_carro = 0;
-
+int geracao_inicial = 0;
 
 //Declaração Semáforos 
 
-SemaphoreHandle_t xSemaphoreCruzamento = NULL;	//Semaforo para acesso ao Cruzamento - duas vagas
-SemaphoreHandle_t xSemaphoreNorte = NULL;		// Semáforos para bloquear a pessagem de mais de um trem ou carro por sentido"
-SemaphoreHandle_t xSemaphoreSul = NULL;			// -
-SemaphoreHandle_t xSemaphoreLeste = NULL;		// -
-SemaphoreHandle_t xSemaphoreOeste = NULL;		// -
-SemaphoreHandle_t xSemaphoreGate = NULL;		// -
+SemaphoreHandle_t xSemaphoreCruzamento = NULL;	
+SemaphoreHandle_t xSemaphoreNorte = NULL;		
+SemaphoreHandle_t xSemaphoreSul = NULL;			
+SemaphoreHandle_t xSemaphoreLeste = NULL;		
+SemaphoreHandle_t xSemaphoreOeste = NULL;		
+SemaphoreHandle_t xSemaphoreGate = NULL;		
 
 
 
@@ -211,18 +211,20 @@ void tremTask(void *pvParameters) {
 
 	for (;;) {
 
-		//srand(xTaskGetTickCount());
+		//int direcao = rand() % 2 + 2;
+		int direcao;
 
+		if (geracao_inicial == 0) {
+			direcao = pvParameters;
+			geracao_inicial = 1;
+		}
+		else {
+			direcao = rand() % 2 + 2;
+		}
 
-		int direcao = rand() % 2 + 2;
-		
 
 		if (xSemaphoreTake(xSemaphoreCruzamento, portMAX_DELAY) == pdTRUE ) {
-			//Dois trens acessam o cruzamento ao mesmo tempo
 			
-			//Gate é a varíavel que representa a cancela
-			//Ela é incrementada sempre que existem trens se aproximando
-			//E decrementada ao realizarem a passagem
 			gate++;
 			
 			//
@@ -244,9 +246,7 @@ void tremTask(void *pvParameters) {
 			vTaskDelay(pdMS_TO_TICKS(rand()%1500 + 750));
 			//
 
-			//Testes para determinar as direções dos trens que estão solicitando acesso
-			//Mas os trens só passam de forma simultânea caso tenha direções de origem distintas 
-			//Pois existem semáforos para cada uma das direções 
+		
 			if (direcao == 2) {
 				if (xSemaphoreTake(xSemaphoreNorte, portMAX_DELAY) == pdTRUE) {
 
@@ -273,8 +273,6 @@ void tremTask(void *pvParameters) {
 				}
 			}
 			
-			//Apos passar ou caso tenha a mesma direção que algum trem que ja esteja passando
-			//O semáforo é liberado
 			xSemaphoreGive(xSemaphoreCruzamento);
 
 		}
@@ -300,23 +298,30 @@ int main(void)
 
 	
 	xSemaphoreCruzamento = xSemaphoreCreateCounting(2, 2); 
-	//Semaforo com duas entradas permitidas
-	//Para representar o cruzamento que pode ter trens passando ao mesmo tempo em diferentes direções assim como carros
 	xSemaphoreNorte = xSemaphoreCreateMutex();
 	xSemaphoreSul = xSemaphoreCreateMutex();
 	xSemaphoreLeste= xSemaphoreCreateMutex();
 	xSemaphoreOeste = xSemaphoreCreateMutex();
 	xSemaphoreGate = xSemaphoreCreateMutex();
 
+	int create_direcao = 2;
+
 	//Criação das tasks
+	
 
 	if (xSemaphoreCruzamento != NULL) {
 		for (int i = 0; i < NUM_TRENS; i++) {
-			xTaskCreate(tremTask, "TREM", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
+			xTaskCreate(tremTask, "TREM", configMINIMAL_STACK_SIZE, create_direcao, 2, NULL);
+			if(create_direcao == 2){
+				create_direcao = 3;
+			}else{
+				create_direcao = 2;
+			}
 		}
 
 		//xTaskCreate(tremTask, "TREM", configMINIMAL_STACK_SIZE, 2, 2, NULL);
 		//xTaskCreate(tremTask, "TREM", configMINIMAL_STACK_SIZE, 3, 2, NULL);
+
 
 		for (int i = 0; i < NUM_CARROS; i++) {
 			xTaskCreate(carroTask, "CARRO", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
