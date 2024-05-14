@@ -31,16 +31,13 @@ Entrar na pasta
 ## Bibliotecas Utilizadas
 
 ```c
-/* Standard includes. */
+
 #include <stdio.h>
 #include <stdlib.h>
-//#include <conio.h>
 
-/* FreeRTOS kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
 
-/* Include para uso de semaforos*/
 #include "semphr.h"
 ```
 
